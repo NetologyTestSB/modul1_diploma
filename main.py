@@ -2,7 +2,8 @@ import requests
 # from pprint import pprint
 # import time
 from datetime import datetime
-# import os
+import json
+import pprint
 
 # токен для в контакте записан в файл token.txt
 with open('token.txt', 'r', encoding='utf-8') as tokfile:
@@ -180,18 +181,27 @@ class UserOperations():
 
     def create_photo_list_file(self):
         ''' создание файла в компьютере со списком фото, загруженных на яндекс.диск '''
-        files_list = []
+        json_dict = {}
+        vk_client.get_name_surname(self.user_id)
+        json_dict['id vk'] = self.user_id
+        json_dict['name'] = vk_client.user_data['name']
+        json_dict['surname'] = vk_client.user_data['surname']
+        json_dict['dir yandex'] = 'disk:' + self.folder_name
+        json_dict.setdefault('photos', [])
         # получаем плоский список файлов (все файлы)
         files_dict = ya.get_files_list()
-        files_list.append(f'Список файлов на Яндекс.Диске в папке: {"disk:" + self.folder_name}\n')
         for dct in files_dict['items']:
             if self.folder_name in dct['path']:
-                files_list.append(dct['path'].split('/')[-1] + '\n')
+                json_dict['photos'].append(dct['path'].split('/')[-1])
         try:
-            with open('yandex_photo_list.txt', 'w', encoding='utf-8') as yaf:
-                yaf.writelines(files_list)
-                print_info('Создан файл yandex_photo_list.txt. Содержимое файла:')
-                print(*files_list)
+            with open('yandex_photo_list.json', 'w', encoding='utf-8') as file:
+                json.dump(json_dict, file, indent=3, ensure_ascii=False)
+            print_info('Создан файл yandex_photo_list.json. Содержимое файла:')
+            for k, v in json_dict.items():
+                if k != 'photos':
+                    print(f'{k}: {v}')
+                else:
+                    print(*v, sep='\n')
         except Exception as err:
             print(err)
 
